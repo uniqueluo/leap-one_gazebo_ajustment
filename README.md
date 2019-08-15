@@ -3,12 +3,15 @@ leap-one robots Gait adjustment
 
 Codes for conference https://github.com/ros/joint_state_publisher
 
-Requirements
+Requirements:
+
 	ROS Kinetic
 
-Install necessary components
+Install necessary components:
+
 	pip2 install --user pandas
 
-Run the code
+Run the code:
+
 	roscore
 	python2 gazebo_ajustment.py
