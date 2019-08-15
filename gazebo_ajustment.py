@@ -179,6 +179,12 @@ class JointStatePublisherGui(QWidget):
         vlayout.addWidget(self.debug_Btn)
 
 
+        self.master_url = QLineEdit("http://192.168.0.91:11311")
+        self.master_url.setFont(font)
+
+        self.master_ip = QLineEdit("192.168.0.91")
+        self.master_ip.setFont(font)
+
 
         self.listVeiw.clicked.connect(self.listVeiw_clicked)
         self.listVeiw.currentRowChanged.connect(self.listVeiw_itemSelectionChanged)
@@ -189,12 +195,15 @@ class JointStatePublisherGui(QWidget):
         #self.description.setGeometry(0,100,100,500)
 
 
-
+        right_l_lauout.addWidget(self.master_url)
+        right_l_lauout.addWidget(self.master_ip)
         right_l_lauout.addWidget(self.listVeiw)
         right_l_lauout.addWidget(self.description)
 
-        right_l_lauout.setStretch(0,3)
+        right_l_lauout.setStretch(0,1)
         right_l_lauout.setStretch(1,1)
+        right_l_lauout.setStretch(2,3)
+        right_l_lauout.setStretch(3,1)
 
         self.num_rows = len(self.checkbox)
         self.hlayout.addLayout(glayout)
@@ -208,6 +217,7 @@ class JointStatePublisherGui(QWidget):
         self.callback_record = None
         self.callback_reset = None
         self.callback_replay = None
+        self.callback_replay_stop = None
         self.callback_delete = None
         self.callback_debug = None
         self.callback_import = None
@@ -274,10 +284,14 @@ class JointStatePublisherGui(QWidget):
         if self.callback_reset:
             self.callback_reset()
     def replay_Btn_clicked(self):
-
-        if self.callback_replay:
-            self.callback_replay()
-        pass
+        if self.replay_Btn.text() == "Replay":
+            self.replay_Btn.setText("Stop")
+            if self.callback_replay:
+                self.callback_replay()
+        else :
+            self.replay_Btn.setText("Replay")
+            if self.callback_replay_stop:
+                self.callback_replay_stop()
     def debug_Btn_clicked(self):
         if self.callback_debug:
             self.callback_debug()
@@ -386,6 +400,7 @@ class JointStatePublisher():
         self.gui.callback_reset = self.reset
         self.gui.callback_record = self.record
         self.gui.callback_replay = self.repaly
+        self.gui.callback_replay_stop = self.replay_stop
         self.gui.callback_delete = self.delete
         self.gui.callback_debug = self.debug
         self.gui.callback_import = self._import
@@ -454,11 +469,13 @@ class JointStatePublisher():
     def reset(self):
         print "reset"
         self.agent.reset()
-        pass
+    def replay_stop(self):
+        self.replay_flag  = False
+        self.data_last = [0 for x in range(0, 12)]
     def repaly(self):
         print "replay"
-        self.replay_flag  = True
-        pass
+        if len(self.data_replay) > 0:
+            self.replay_flag  = True
     def start(self):
         print "start"
         self.agent.set_callback(self.send_position)
@@ -491,12 +508,13 @@ class JointStatePublisher():
             self.data_last = data
 
             self.replay_index += 1
-            if self.replay_index >= len(self.data_replay):
-                print self.data_last
-                self.data_last = [0 for x in range(0, 12)]
-                self.gui.set_positions(self.data_last)
-                self.replay_flag = False
-                self.replay_index = 0
+            self.replay_index = self.replay_index % len(self.data_replay)
+            #if self.replay_index >= len(self.data_replay):
+            #    print self.data_last
+            #    self.data_last = [0 for x in range(0, 12)]
+            #    self.gui.set_positions(self.data_last)
+            #    self.replay_flag = False
+            #    self.replay_index = 0
         else:
             data = self.gui.get_position()
         self.agent.send_position(data)
